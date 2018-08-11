@@ -1,1 +1,1 @@
-# gostats
+# gohttpstats

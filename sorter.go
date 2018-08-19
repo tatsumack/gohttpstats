@@ -2,6 +2,18 @@ package httpstats
 
 import "sort"
 
+func (hs *HTTPStats) SortCount(reverse bool) {
+	if reverse {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].Count() > hs.stats[j].Count()
+		})
+	} else {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].Count() < hs.stats[j].Count()
+		})
+	}
+}
+
 func (hs *HTTPStats) SortMaxResponseTime(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {

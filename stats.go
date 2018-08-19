@@ -3,17 +3,44 @@ package httpstats
 import (
 	"math"
 	"fmt"
-)
+	"sync"
+	)
+
+type Hints struct {
+	values map[string]int
+	len int
+	mu sync.RWMutex
+}
+
+func NewHints() *Hints {
+	return &Hints{
+		values: make(map[string]int),
+	}
+}
+
+func (h *Hints) LoadOrStore(key string) int {
+	_, ok := h.values[key]
+	if !ok {
+		defer h.mu.Unlock()
+		h.mu.Lock()
+		h.values[key] = h.len
+		h.len++
+	}
+
+	return h.values[key]
+}
 
 type HTTPStats struct {
-	stats map[string]*HTTPStat
+	hints *Hints
+	stats []*HTTPStat
 	useResponseTimePercentile bool
 	useBodySizePercentile bool
 }
 
 func NewHTTPStats(useResTimePercentile, useBodySizePercentile bool) *HTTPStats {
 	return &HTTPStats{
-		stats: make(map[string]*HTTPStat, 0),
+		hints: NewHints(),
+		stats: make([]*HTTPStat, 0),
 		useResponseTimePercentile: useResTimePercentile,
 		useBodySizePercentile: useBodySizePercentile,
 	}
@@ -22,13 +49,17 @@ func NewHTTPStats(useResTimePercentile, useBodySizePercentile bool) *HTTPStats {
 func (hs *HTTPStats) Set(uri, method string, restime, body float64) {
 	key := fmt.Sprintf("%s_%s", method, uri)
 
-	_, ok := hs.stats[key]
-	if !ok {
-		hs.stats[key] = NewHTTPStat(uri, method, hs.useResponseTimePercentile, hs.useBodySizePercentile)
+	idx := hs.hints.LoadOrStore(key)
+
+	if idx >= len(hs.stats) {
+		hs.stats = append(hs.stats, NewHTTPStat(uri, method, hs.useResponseTimePercentile, hs.useBodySizePercentile))
 	}
 
-	hs.stats[key].Set(restime, body)
+	hs.stats[idx].Set(restime, body)
+}
 
+func (hs *HTTPStats) Stats() []*HTTPStat {
+	return hs.stats
 }
 
 type HTTPStat struct {

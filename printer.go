@@ -9,6 +9,13 @@ import (
 
 var headers = map[string]string{
 	"count": "Count",
+	"method": "Method",
+	"uri": "Uri",
+	"status_1xx": "Status_1xx",
+	"status_2xx": "Status_2xx",
+	"status_3xx": "Status_3xx",
+	"status_4xx": "Status_4xx",
+	"status_5xx": "Status_5xx",
 	"min": "Min",
 	"max": "Max",
 	"sum": "Sum",
@@ -21,15 +28,13 @@ var headers = map[string]string{
 	"max_body": "Max(Body)",
 	"sum_body": "Sum(Body)",
 	"avg_body": "Avg(Body)",
-	"method": "Method",
-	"uri": "Uri",
 }
 
 var defaultHeaders = []string{
-	"Count", "Min", "Max", "Sum", "Avg",
+	"Count", "Method", "Uri", "1xx", "2xx", "3xx", "4xx", "5xx",
+	"Min", "Max", "Sum", "Avg",
 	"P1", "P50", "P99", "Stddev",
 	"Min(Body)", "Max(Body)", "Sum(Body)", "Avg(Body)",
-	"Method", "Uri",
 }
 
 type PrintOption struct {
@@ -63,12 +68,13 @@ func (hs *HTTPStats) printTable() {
 	table.SetHeader(hs.printOption.headers)
 	for _, s := range hs.stats {
 		data := []string{
-			fmt.Sprint(s.Count()), round(s.MinResponseTime()), round(s.MaxResponseTime()),
+			s.StrCount(), s.Method(), s.Uri(),
+			s.StrStatus1xx(), s.StrStatus2xx(), s.StrStatus3xx(), s.StrStatus4xx(), s.StrStatus5xx(),
+			round(s.MinResponseTime()), round(s.MaxResponseTime()),
 			round(s.SumResponseTime()), round(s.AvgResponseTime()),
 			round(s.P1ResponseTime()), round(s.P50ResponseTime()), round(s.P99ResponseTime()),
-			round(s.StddevResponseTime()),
-			round(s.MinResponseBodySize()), round(s.MaxResponseBodySize()), round(s.SumResponseBodySize()), round(s.AvgResponseBodySize()),
-			s.Method(), s.Uri()}
+			round(s.StddevResponseTime()), round(s.MinResponseBodySize()), round(s.MaxResponseBodySize()), round(s.SumResponseBodySize()),round(s.AvgResponseBodySize()),
+		}
 		table.Append(data)
 	}
 	table.Render()
@@ -80,12 +86,12 @@ func (hs *HTTPStats) printTSV() {
 	}
 	for _, s := range hs.stats {
 		data := []string{
-			fmt.Sprint(s.Count()), round(s.MinResponseTime()), round(s.MaxResponseTime()),
-			round(s.SumResponseTime()), round(s.AvgResponseTime()),
-			round(s.P1ResponseTime()), round(s.P50ResponseTime()), round(s.P99ResponseTime()),
-			round(s.StddevResponseTime()),
-			round(s.MinResponseBodySize()), round(s.MaxResponseBodySize()), round(s.SumResponseBodySize()), round(s.AvgResponseBodySize()),
-			s.Method(), s.Uri(),
+			s.StrCount(), s.Method(), s.Uri(),
+			s.StrStatus1xx(), s.StrStatus2xx(), s.StrStatus3xx(), s.StrStatus4xx(), s.StrStatus5xx(),
+				round(s.MinResponseTime()), round(s.MaxResponseTime()),
+				round(s.SumResponseTime()), round(s.AvgResponseTime()),
+				round(s.P1ResponseTime()), round(s.P50ResponseTime()), round(s.P99ResponseTime()),
+				round(s.StddevResponseTime()), round(s.MinResponseBodySize()), round(s.MaxResponseBodySize()), round(s.SumResponseBodySize()), round(s.AvgResponseBodySize()),
 		}
 		fmt.Println(strings.Join(data, `\t`))
 	}

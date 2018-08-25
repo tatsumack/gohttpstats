@@ -49,7 +49,7 @@ func NewHTTPStats(useResTimePercentile, useRequestBodySizePercentile, useRespons
 	}
 }
 
-func (hs *HTTPStats) Set(uri, method string, restime, body float64) {
+func (hs *HTTPStats) Set(uri, method string, status int, restime, resBodySize, reqBodySize float64) {
 	key := fmt.Sprintf("%s_%s", method, uri)
 
 	idx := hs.hints.loadOrStore(key)
@@ -58,7 +58,7 @@ func (hs *HTTPStats) Set(uri, method string, restime, body float64) {
 		hs.stats = append(hs.stats, newHTTPStat(uri, method, hs.useResponseTimePercentile, hs.useRequestBodySizePercentile, hs.useResponseBodySizePercentile))
 	}
 
-	hs.stats[idx].Set(restime, body)
+	hs.stats[idx].Set(status, restime, resBodySize, reqBodySize)
 }
 
 func (hs *HTTPStats) Stats() []*httpStat {
@@ -68,10 +68,16 @@ func (hs *HTTPStats) Stats() []*httpStat {
 type httpStat struct {
 	uri         string
 	cnt         int
+	status1xx int
+	status2xx int
+	status3xx int
+	status4xx int
+	status5xx int
 	method      string
 	responseTime *responseTime
 	requestBodySize *bodySize
 	responseBodySize *bodySize
+
 }
 
 func newHTTPStat(uri, method string, useResTimePercentile, useRequestBodySizePercentile, useResponseBodySizePercentile bool) *httpStat {
@@ -84,14 +90,74 @@ func newHTTPStat(uri, method string, useResTimePercentile, useRequestBodySizePer
 	}
 }
 
-func (hs *httpStat) Set(restime, bodysize float64) {
+func (hs *httpStat) Set(status int, restime, reqBodySize, resBodySize float64) {
 	hs.cnt++
+	hs.setStatus(status)
 	hs.responseTime.Set(restime)
-	hs.responseBodySize.Set(bodysize)
+	hs.requestBodySize.Set(reqBodySize)
+	hs.responseBodySize.Set(resBodySize)
+}
+
+func (hs *httpStat) setStatus(status int) {
+	if status >= 100 && status <= 199 {
+		hs.status1xx++
+	} else if status >= 200 && status <= 299 {
+		hs.status2xx++
+	} else if status >= 300 && status <= 399 {
+		hs.status3xx++
+	} else if status >= 400 && status <= 499 {
+		hs.status4xx++
+	} else if status >= 500 && status <= 599 {
+		hs.status5xx++
+	}
+}
+
+func (hs *httpStat) Status1xx() int {
+	return hs.status1xx
+}
+
+func (hs *httpStat) StrStatus1xx() string {
+	return fmt.Sprint(hs.status1xx)
+}
+
+func (hs *httpStat) Status2xx() int {
+	return hs.status2xx
+}
+
+func (hs *httpStat) StrStatus2xx() string {
+	return fmt.Sprint(hs.status2xx)
+}
+
+func (hs *httpStat) Status3xx() int {
+	return hs.status3xx
+}
+
+func (hs *httpStat) StrStatus3xx() string {
+	return fmt.Sprint(hs.status3xx)
+}
+
+func (hs *httpStat) Status4xx() int {
+	return hs.status4xx
+}
+
+func (hs *httpStat) StrStatus4xx() string {
+	return fmt.Sprint(hs.status4xx)
+}
+
+func (hs *httpStat) Status5xx() int {
+	return hs.status5xx
+}
+
+func (hs *httpStat) StrStatus5xx() string {
+	return fmt.Sprint(hs.status5xx)
 }
 
 func (hs *httpStat) Count() int {
 	return hs.cnt
+}
+
+func (hs *httpStat) StrCount() string {
+	return fmt.Sprint(hs.cnt)
 }
 
 func (hs *httpStat) Uri() string {

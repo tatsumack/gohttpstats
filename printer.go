@@ -67,7 +67,7 @@ func (hs *HTTPStats) printTable() {
 			round(s.SumResponseTime()), round(s.AvgResponseTime()),
 			round(s.P1ResponseTime()), round(s.P50ResponseTime()), round(s.P99ResponseTime()),
 			round(s.StddevResponseTime()),
-			round(s.MinBodySize()), round(s.MaxBodySize()), round(s.SumBodySize()), round(s.AvgBodySize()),
+			round(s.MinResponseBodySize()), round(s.MaxResponseBodySize()), round(s.SumResponseBodySize()), round(s.AvgResponseBodySize()),
 			s.Method(), s.Uri()}
 		table.Append(data)
 	}
@@ -84,7 +84,7 @@ func (hs *HTTPStats) printTSV() {
 			round(s.SumResponseTime()), round(s.AvgResponseTime()),
 			round(s.P1ResponseTime()), round(s.P50ResponseTime()), round(s.P99ResponseTime()),
 			round(s.StddevResponseTime()),
-			round(s.MinBodySize()), round(s.MaxBodySize()), round(s.SumBodySize()), round(s.AvgBodySize()),
+			round(s.MinResponseBodySize()), round(s.MaxResponseBodySize()), round(s.SumResponseBodySize()), round(s.AvgResponseBodySize()),
 			s.Method(), s.Uri(),
 		}
 		fmt.Println(strings.Join(data, `\t`))

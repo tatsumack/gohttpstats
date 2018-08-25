@@ -122,110 +122,221 @@ func (hs *HTTPStats) SortStddevResponseTime(reverse bool) {
 	}
 }
 
-func (hs *HTTPStats) SortMaxBodySize(reverse bool) {
+// request
+func (hs *HTTPStats) SortMaxRequestBodySize(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].MaxBodySize() > hs.stats[j].MaxBodySize()
+			return hs.stats[i].MaxRequestBodySize() > hs.stats[j].MaxRequestBodySize()
 		})
 	} else {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].MaxBodySize() < hs.stats[j].MaxBodySize()
+			return hs.stats[i].MaxRequestBodySize() < hs.stats[j].MaxRequestBodySize()
 		})
 	}
 }
 
-func (hs *HTTPStats) SortMinBodySize(reverse bool) {
+func (hs *HTTPStats) SortMinRequestBodySize(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].MinBodySize() > hs.stats[j].MinBodySize()
+			return hs.stats[i].MinRequestBodySize() > hs.stats[j].MinRequestBodySize()
 		})
 	} else {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].MinBodySize() < hs.stats[j].MinBodySize()
+			return hs.stats[i].MinRequestBodySize() < hs.stats[j].MinRequestBodySize()
 		})
 	}
 }
 
-func (hs *HTTPStats) SortSumBodySize(reverse bool) {
+func (hs *HTTPStats) SortSumRequestBodySize(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].SumBodySize() > hs.stats[j].SumBodySize()
+			return hs.stats[i].SumRequestBodySize() > hs.stats[j].SumRequestBodySize()
 		})
 	} else {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].SumBodySize() < hs.stats[j].SumBodySize()
+			return hs.stats[i].SumRequestBodySize() < hs.stats[j].SumRequestBodySize()
 		})
 	}
 }
 
-func (hs *HTTPStats) AvgBodySize(reverse bool) {
+func (hs *HTTPStats) AvgRequestBodySize(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].AvgBodySize() > hs.stats[j].AvgBodySize()
+			return hs.stats[i].AvgRequestBodySize() > hs.stats[j].AvgRequestBodySize()
 		})
 	} else {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].AvgBodySize() < hs.stats[j].AvgBodySize()
+			return hs.stats[i].AvgRequestBodySize() < hs.stats[j].AvgRequestBodySize()
 		})
 	}
 }
 
-func (hs *HTTPStats) SortP1BodySize(reverse bool)  {
+func (hs *HTTPStats) SortP1RequestBodySize(reverse bool)  {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].P1BodySize() > hs.stats[j].P1BodySize()
+			return hs.stats[i].P1RequestBodySize() > hs.stats[j].P1RequestBodySize()
 		})
 	} else {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].P1BodySize() < hs.stats[j].P1BodySize()
+			return hs.stats[i].P1RequestBodySize() < hs.stats[j].P1RequestBodySize()
 		})
 	}
 }
 
-func (hs *HTTPStats) SortP50BodySize(reverse bool) {
+func (hs *HTTPStats) SortP50RequestBodySize(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].P50BodySize() > hs.stats[j].P50BodySize()
+			return hs.stats[i].P50RequestBodySize() > hs.stats[j].P50RequestBodySize()
 		})
 	} else {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].P50BodySize() < hs.stats[j].P50BodySize()
+			return hs.stats[i].P50RequestBodySize() < hs.stats[j].P50RequestBodySize()
 		})
 	}
 }
 
-func (hs *HTTPStats) SortP90BodySize(reverse bool) {
+func (hs *HTTPStats) SortP90RequestBodySize(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].P90BodySize() > hs.stats[j].P90BodySize()
+			return hs.stats[i].P90RequestBodySize() > hs.stats[j].P90RequestBodySize()
 		})
 	} else {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].P90BodySize() < hs.stats[j].P90BodySize()
+			return hs.stats[i].P90RequestBodySize() < hs.stats[j].P90RequestBodySize()
 		})
 	}
 }
 
-func (hs *HTTPStats) SortP99BodySize(reverse bool) {
+func (hs *HTTPStats) SortP99RequestBodySize(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].P99BodySize() > hs.stats[j].P99BodySize()
+			return hs.stats[i].P99RequestBodySize() > hs.stats[j].P99RequestBodySize()
 		})
 	} else {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].P99BodySize() < hs.stats[j].P99BodySize()
+			return hs.stats[i].P99RequestBodySize() < hs.stats[j].P99RequestBodySize()
 		})
 	}
 }
 
-func (hs *HTTPStats) SortStddevBodySize(reverse bool) {
+func (hs *HTTPStats) SortStddevRequestBodySize(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].StddevBodySize() > hs.stats[j].StddevBodySize()
+			return hs.stats[i].StddevRequestBodySize() > hs.stats[j].StddevRequestBodySize()
 		})
 	} else {
 		sort.Slice(hs.stats, func(i, j int) bool {
-			return hs.stats[i].StddevBodySize() < hs.stats[j].StddevBodySize()
+			return hs.stats[i].StddevRequestBodySize() < hs.stats[j].StddevRequestBodySize()
+		})
+	}
+}
+
+
+// response
+func (hs *HTTPStats) SortMaxResponseBodySize(reverse bool) {
+	if reverse {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].MaxResponseBodySize() > hs.stats[j].MaxResponseBodySize()
+		})
+	} else {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].MaxResponseBodySize() < hs.stats[j].MaxResponseBodySize()
+		})
+	}
+}
+
+func (hs *HTTPStats) SortMinResponseBodySize(reverse bool) {
+	if reverse {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].MinResponseBodySize() > hs.stats[j].MinResponseBodySize()
+		})
+	} else {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].MinResponseBodySize() < hs.stats[j].MinResponseBodySize()
+		})
+	}
+}
+
+func (hs *HTTPStats) SortSumResponseBodySize(reverse bool) {
+	if reverse {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].SumResponseBodySize() > hs.stats[j].SumResponseBodySize()
+		})
+	} else {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].SumResponseBodySize() < hs.stats[j].SumResponseBodySize()
+		})
+	}
+}
+
+func (hs *HTTPStats) AvgResponseBodySize(reverse bool) {
+	if reverse {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].AvgResponseBodySize() > hs.stats[j].AvgResponseBodySize()
+		})
+	} else {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].AvgResponseBodySize() < hs.stats[j].AvgResponseBodySize()
+		})
+	}
+}
+
+func (hs *HTTPStats) SortP1ResponseBodySize(reverse bool)  {
+	if reverse {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].P1ResponseBodySize() > hs.stats[j].P1ResponseBodySize()
+		})
+	} else {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].P1ResponseBodySize() < hs.stats[j].P1ResponseBodySize()
+		})
+	}
+}
+
+func (hs *HTTPStats) SortP50ResponseBodySize(reverse bool) {
+	if reverse {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].P50ResponseBodySize() > hs.stats[j].P50ResponseBodySize()
+		})
+	} else {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].P50ResponseBodySize() < hs.stats[j].P50ResponseBodySize()
+		})
+	}
+}
+
+func (hs *HTTPStats) SortP90ResponseBodySize(reverse bool) {
+	if reverse {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].P90ResponseBodySize() > hs.stats[j].P90ResponseBodySize()
+		})
+	} else {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].P90ResponseBodySize() < hs.stats[j].P90ResponseBodySize()
+		})
+	}
+}
+
+func (hs *HTTPStats) SortP99ResponseBodySize(reverse bool) {
+	if reverse {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].P99ResponseBodySize() > hs.stats[j].P99ResponseBodySize()
+		})
+	} else {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].P99ResponseBodySize() < hs.stats[j].P99ResponseBodySize()
+		})
+	}
+}
+
+func (hs *HTTPStats) SortStddevResponseBodySize(reverse bool) {
+	if reverse {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].StddevResponseBodySize() > hs.stats[j].StddevResponseBodySize()
+		})
+	} else {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].StddevResponseBodySize() < hs.stats[j].StddevResponseBodySize()
 		})
 	}
 }

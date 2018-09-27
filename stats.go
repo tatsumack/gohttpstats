@@ -32,7 +32,7 @@ func (h *hints) loadOrStore(key string) int {
 
 type HTTPStats struct {
 	hints *hints
-	stats []*httpStat
+	stats httpStats
 	useResponseTimePercentile bool
 	useRequestBodySizePercentile bool
 	useResponseBodySizePercentile bool
@@ -47,6 +47,10 @@ func NewHTTPStats(useResTimePercentile, useRequestBodySizePercentile, useRespons
 		useResponseBodySizePercentile: useResponseBodySizePercentile,
 		printOption: po,
 	}
+}
+
+func (hs *HTTPStats) CountUris() int {
+	return hs.hints.len
 }
 
 func (hs *HTTPStats) Set(uri, method string, status int, restime, resBodySize, reqBodySize float64) {
@@ -66,216 +70,190 @@ func (hs *HTTPStats) Stats() []*httpStat {
 }
 
 type httpStat struct {
-	uri         string
-	cnt         int
-	status1xx int
-	status2xx int
-	status3xx int
-	status4xx int
-	status5xx int
-	method      string
-	responseTime *responseTime
-	requestBodySize *bodySize
-	responseBodySize *bodySize
+	Uri         string `yaml:uri`
+	Cnt         int `yaml:cnt`
+	Status1xx int `yaml:status1xx`
+	Status2xx int `yaml:status2xx`
+	Status3xx int `yaml:status3xx`
+	Status4xx int `yaml:status4xx`
+	Status5xx int `yaml:status5xx`
+	Method      string `yaml:method`
+	ResponseTime *responseTime `yaml:response_time`
+	RequestBodySize *bodySize `yaml:request_body_size`
+	ResponseBodySize *bodySize `yaml:response_body_size`
 
 }
 
+type httpStats []*httpStat
+
 func newHTTPStat(uri, method string, useResTimePercentile, useRequestBodySizePercentile, useResponseBodySizePercentile bool) *httpStat {
 	return &httpStat{
-		uri: uri,
-		method: method,
-		responseTime: newResponseTime(useResTimePercentile),
-		requestBodySize: newBodySize(useRequestBodySizePercentile),
-		responseBodySize: newBodySize(useResponseBodySizePercentile),
+		Uri: uri,
+		Method: method,
+		ResponseTime: newResponseTime(useResTimePercentile),
+		RequestBodySize: newBodySize(useRequestBodySizePercentile),
+		ResponseBodySize: newBodySize(useResponseBodySizePercentile),
 	}
 }
 
 func (hs *httpStat) Set(status int, restime, reqBodySize, resBodySize float64) {
-	hs.cnt++
+	hs.Cnt++
 	hs.setStatus(status)
-	hs.responseTime.Set(restime)
-	hs.requestBodySize.Set(reqBodySize)
-	hs.responseBodySize.Set(resBodySize)
+	hs.ResponseTime.Set(restime)
+	hs.RequestBodySize.Set(reqBodySize)
+	hs.ResponseBodySize.Set(resBodySize)
 }
 
 func (hs *httpStat) setStatus(status int) {
 	if status >= 100 && status <= 199 {
-		hs.status1xx++
+		hs.Status1xx++
 	} else if status >= 200 && status <= 299 {
-		hs.status2xx++
+		hs.Status2xx++
 	} else if status >= 300 && status <= 399 {
-		hs.status3xx++
+		hs.Status3xx++
 	} else if status >= 400 && status <= 499 {
-		hs.status4xx++
+		hs.Status4xx++
 	} else if status >= 500 && status <= 599 {
-		hs.status5xx++
+		hs.Status5xx++
 	}
 }
 
-func (hs *httpStat) Status1xx() int {
-	return hs.status1xx
-}
-
 func (hs *httpStat) StrStatus1xx() string {
-	return fmt.Sprint(hs.status1xx)
-}
-
-func (hs *httpStat) Status2xx() int {
-	return hs.status2xx
+	return fmt.Sprint(hs.Status1xx)
 }
 
 func (hs *httpStat) StrStatus2xx() string {
-	return fmt.Sprint(hs.status2xx)
-}
-
-func (hs *httpStat) Status3xx() int {
-	return hs.status3xx
+	return fmt.Sprint(hs.Status2xx)
 }
 
 func (hs *httpStat) StrStatus3xx() string {
-	return fmt.Sprint(hs.status3xx)
-}
-
-func (hs *httpStat) Status4xx() int {
-	return hs.status4xx
+	return fmt.Sprint(hs.Status3xx)
 }
 
 func (hs *httpStat) StrStatus4xx() string {
-	return fmt.Sprint(hs.status4xx)
-}
-
-func (hs *httpStat) Status5xx() int {
-	return hs.status5xx
+	return fmt.Sprint(hs.Status4xx)
 }
 
 func (hs *httpStat) StrStatus5xx() string {
-	return fmt.Sprint(hs.status5xx)
+	return fmt.Sprint(hs.Status5xx)
 }
 
 func (hs *httpStat) Count() int {
-	return hs.cnt
+	return hs.Cnt
 }
 
 func (hs *httpStat) StrCount() string {
-	return fmt.Sprint(hs.cnt)
-}
-
-func (hs *httpStat) Uri() string {
-	return hs.uri
-}
-
-func (hs *httpStat) Method() string {
-	return hs.method
+	return fmt.Sprint(hs.Cnt)
 }
 
 func (hs *httpStat) MaxResponseTime() float64 {
-	return hs.responseTime.Max()
+	return hs.ResponseTime.Max
 }
 
 func (hs *httpStat) MinResponseTime() float64 {
-	return hs.responseTime.Min()
+	return hs.ResponseTime.Min
 }
 
 func (hs *httpStat) SumResponseTime() float64 {
-	return hs.responseTime.Sum()
+	return hs.ResponseTime.Sum
 }
 
 func (hs *httpStat) AvgResponseTime() float64 {
-	return hs.responseTime.Avg(hs.cnt)
+	return hs.ResponseTime.Avg(hs.Cnt)
 }
 
 func (hs *httpStat) P1ResponseTime() float64 {
-	return hs.responseTime.P1(hs.cnt)
+	return hs.ResponseTime.P1(hs.Cnt)
 }
 
 func (hs *httpStat) P50ResponseTime() float64 {
-	return hs.responseTime.P50(hs.cnt)
+	return hs.ResponseTime.P50(hs.Cnt)
 }
 
 func (hs *httpStat) P90ResponseTime() float64 {
-	return hs.responseTime.P90(hs.cnt)
+	return hs.ResponseTime.P90(hs.Cnt)
 }
 
 func (hs *httpStat) P99ResponseTime() float64 {
-	return hs.responseTime.P99(hs.cnt)
+	return hs.ResponseTime.P99(hs.Cnt)
 }
 
 func (hs *httpStat) StddevResponseTime() float64 {
-	return hs.responseTime.Stddev(hs.cnt)
+	return hs.ResponseTime.Stddev(hs.Cnt)
 }
 
 // request
 func (hs *httpStat) MaxRequestBodySize() float64 {
-	return hs.requestBodySize.Max()
+	return hs.RequestBodySize.Max
 }
 
 func (hs *httpStat) MinRequestBodySize() float64 {
-	return hs.requestBodySize.Min()
+	return hs.RequestBodySize.Min
 }
 
 func (hs *httpStat) SumRequestBodySize() float64 {
-	return hs.requestBodySize.Sum()
+	return hs.RequestBodySize.Sum
 }
 
 func (hs *httpStat) AvgRequestBodySize() float64 {
-	return hs.requestBodySize.Avg(hs.cnt)
+	return hs.RequestBodySize.Avg(hs.Cnt)
 }
 
 func (hs *httpStat) P1RequestBodySize() float64 {
-	return hs.requestBodySize.P1(hs.cnt)
+	return hs.RequestBodySize.P1(hs.Cnt)
 }
 
 func (hs *httpStat) P50RequestBodySize() float64 {
-	return hs.requestBodySize.P50(hs.cnt)
+	return hs.RequestBodySize.P50(hs.Cnt)
 }
 
 func (hs *httpStat) P90RequestBodySize() float64 {
-	return hs.requestBodySize.P90(hs.cnt)
+	return hs.RequestBodySize.P90(hs.Cnt)
 }
 
 func (hs *httpStat) P99RequestBodySize() float64 {
-	return hs.requestBodySize.P99(hs.cnt)
+	return hs.RequestBodySize.P99(hs.Cnt)
 }
 
 func (hs *httpStat) StddevRequestBodySize() float64 {
-	return hs.requestBodySize.Stddev(hs.cnt)
+	return hs.RequestBodySize.Stddev(hs.Cnt)
 }
 
 // response
 func (hs *httpStat) MaxResponseBodySize() float64 {
-	return hs.requestBodySize.Max()
+	return hs.RequestBodySize.Max
 }
 
 func (hs *httpStat) MinResponseBodySize() float64 {
-	return hs.requestBodySize.Min()
+	return hs.RequestBodySize.Min
 }
 
 func (hs *httpStat) SumResponseBodySize() float64 {
-	return hs.requestBodySize.Sum()
+	return hs.RequestBodySize.Sum
 }
 
 func (hs *httpStat) AvgResponseBodySize() float64 {
-	return hs.requestBodySize.Avg(hs.cnt)
+	return hs.RequestBodySize.Avg(hs.Cnt)
 }
 
 func (hs *httpStat) P1ResponseBodySize() float64 {
-	return hs.requestBodySize.P1(hs.cnt)
+	return hs.RequestBodySize.P1(hs.Cnt)
 }
 
 func (hs *httpStat) P50ResponseBodySize() float64 {
-	return hs.requestBodySize.P50(hs.cnt)
+	return hs.RequestBodySize.P50(hs.Cnt)
 }
 
 func (hs *httpStat) P90ResponseBodySize() float64 {
-	return hs.requestBodySize.P90(hs.cnt)
+	return hs.RequestBodySize.P90(hs.Cnt)
 }
 
 func (hs *httpStat) P99ResponseBodySize() float64 {
-	return hs.requestBodySize.P99(hs.cnt)
+	return hs.RequestBodySize.P99(hs.Cnt)
 }
 
 func (hs *httpStat) StddevResponseBodySize() float64 {
-	return hs.requestBodySize.Stddev(hs.cnt)
+	return hs.RequestBodySize.Stddev(hs.Cnt)
 }
 
 func lenPercentile(l int, n int) int {
@@ -288,51 +266,38 @@ func lenPercentile(l int, n int) int {
 }
 
 type responseTime struct {
-	max float64
-	min float64
-	sum float64
-	cnt int
+	Max float64
+	Min float64
+	Sum float64
 	usePercentile bool
-	percentiles []float64
+	Percentiles []float64
 }
 
 func newResponseTime(usePercentile bool) *responseTime {
 	return &responseTime{
 		usePercentile: usePercentile,
-		percentiles: make([]float64, 0),
+		Percentiles: make([]float64, 0),
 	}
 }
 
 func (res *responseTime) Set(val float64) {
-	if res.max < val {
-		res.max = val
+	if res.Max < val {
+		res.Max = val
 	}
 
-	if res.min >= val || res.min == 0 {
-		res.min = val
+	if res.Min >= val || res.Min == 0 {
+		res.Min = val
 	}
 
-	res.sum += val
+	res.Sum += val
 
 	if res.usePercentile {
-		res.percentiles = append(res.percentiles, val)
+		res.Percentiles = append(res.Percentiles, val)
 	}
-}
-
-func (res *responseTime) Max() float64 {
-	return res.max
-}
-
-func (res *responseTime) Min() float64{
-	return res.min
-}
-
-func (res *responseTime) Sum() float64 {
-	return res.sum
 }
 
 func (res *responseTime) Avg(cnt int) float64 {
-	return res.sum / float64(cnt)
+	return res.Sum / float64(cnt)
 }
 
 func (res *responseTime) P1(cnt int) float64 {
@@ -341,7 +306,7 @@ func (res *responseTime) P1(cnt int) float64 {
 	}
 
 	plen := lenPercentile(cnt, 1)
-	return res.percentiles[plen]
+	return res.Percentiles[plen]
 }
 
 func (res *responseTime) P50(cnt int) float64 {
@@ -350,7 +315,7 @@ func (res *responseTime) P50(cnt int) float64 {
 	}
 
 	plen := lenPercentile(cnt, 50)
-	return res.percentiles[plen]
+	return res.Percentiles[plen]
 }
 
 func (res *responseTime) P90(cnt int) float64 {
@@ -359,7 +324,7 @@ func (res *responseTime) P90(cnt int) float64 {
 	}
 
 	plen := lenPercentile(cnt, 90)
-	return res.percentiles[plen]
+	return res.Percentiles[plen]
 }
 
 func (res *responseTime) P99(cnt int) float64 {
@@ -368,7 +333,7 @@ func (res *responseTime) P99(cnt int) float64 {
 	}
 
 	plen := lenPercentile(cnt, 99)
-	return res.percentiles[plen]
+	return res.Percentiles[plen]
 }
 
 func (res *responseTime) Stddev(cnt int) float64 {
@@ -380,7 +345,7 @@ func (res *responseTime) Stddev(cnt int) float64 {
 	avg := res.Avg(cnt)
 	n := float64(cnt)
 
-	for _, v := range res.percentiles {
+	for _, v := range res.Percentiles {
 		stdd += (v - avg) * (v - avg)
 	}
 
@@ -388,9 +353,9 @@ func (res *responseTime) Stddev(cnt int) float64 {
 }
 
 type bodySize struct {
-	max float64
-	min float64
-	sum float64
+	Max float64
+	Min float64
+	Sum float64
 	usePercentile bool
 	percentiles []float64
 }
@@ -403,35 +368,23 @@ func newBodySize(usePercentile bool) *bodySize {
 }
 
 func (body *bodySize) Set(val float64) {
-	if body.max < val {
-		body.max = val
+	if body.Max < val {
+		body.Max = val
 	}
 
-	if body.min >= val || body.min == 0.0 {
-		body.min = val
+	if body.Min >= val || body.Min == 0.0 {
+		body.Min = val
 	}
 
-	body.sum += val
+	body.Sum += val
 
 	if body.usePercentile {
 		body.percentiles = append(body.percentiles, val)
 	}
 }
 
-func (body *bodySize) Max() float64 {
-	return body.max
-}
-
-func (body *bodySize) Min() float64{
-	return body.min
-}
-
-func (body *bodySize) Sum() float64 {
-	return body.sum
-}
-
 func (body *bodySize) Avg(cnt int) float64 {
-	return body.sum / float64(cnt)
+	return body.Sum / float64(cnt)
 }
 
 func (body *bodySize) P1(cnt int) float64 {

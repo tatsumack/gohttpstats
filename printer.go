@@ -68,7 +68,7 @@ func (hs *HTTPStats) printTable() {
 	table.SetHeader(hs.printOption.headers)
 	for _, s := range hs.stats {
 		data := []string{
-			s.StrCount(), s.Method(), s.Uri(),
+			s.StrCount(), s.Method, s.Uri,
 			s.StrStatus1xx(), s.StrStatus2xx(), s.StrStatus3xx(), s.StrStatus4xx(), s.StrStatus5xx(),
 			round(s.MinResponseTime()), round(s.MaxResponseTime()),
 			round(s.SumResponseTime()), round(s.AvgResponseTime()),
@@ -86,7 +86,7 @@ func (hs *HTTPStats) printTSV() {
 	}
 	for _, s := range hs.stats {
 		data := []string{
-			s.StrCount(), s.Method(), s.Uri(),
+			s.StrCount(), s.Method, s.Uri,
 			s.StrStatus1xx(), s.StrStatus2xx(), s.StrStatus3xx(), s.StrStatus4xx(), s.StrStatus5xx(),
 				round(s.MinResponseTime()), round(s.MaxResponseTime()),
 				round(s.SumResponseTime()), round(s.AvgResponseTime()),

@@ -1,15 +1,20 @@
 package httpstats
 
 import (
-	"math"
 	"fmt"
+	"io"
+	"math"
+	"net/url"
+	"regexp"
 	"sync"
-	)
+
+	"github.com/tkuchiki/gohttpstats/parsers"
+)
 
 type hints struct {
 	values map[string]int
-	len int
-	mu sync.RWMutex
+	len    int
+	mu     sync.RWMutex
 }
 
 func newHints() *hints {
@@ -19,41 +24,50 @@ func newHints() *hints {
 }
 
 func (h *hints) loadOrStore(key string) int {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	_, ok := h.values[key]
 	if !ok {
-		h.mu.Lock()
 		h.values[key] = h.len
 		h.len++
-		h.mu.Unlock()
 	}
 
 	return h.values[key]
 }
 
 type HTTPStats struct {
-	hints *hints
-	stats httpStats
-	useResponseTimePercentile bool
-	useRequestBodySizePercentile bool
+	hints                         *hints
+	stats                         httpStats
+	useResponseTimePercentile     bool
+	useRequestBodySizePercentile  bool
 	useResponseBodySizePercentile bool
-	printOption *PrintOption
+	printOptions                   *PrintOptions
+	filter                        *Filter
+	parser                        parsers.Parser
+	options                       *Options
+	uriCapturingGroups            []*regexp.Regexp
 }
 
-func NewHTTPStats(useResTimePercentile, useRequestBodySizePercentile, useResponseBodySizePercentile bool, po *PrintOption) *HTTPStats {
+func NewHTTPStats(useResTimePercentile, useRequestBodySizePercentile, useResponseBodySizePercentile bool, po *PrintOptions) *HTTPStats {
 	return &HTTPStats{
 		hints: newHints(),
 		stats: make([]*httpStat, 0),
-		useResponseTimePercentile: useResTimePercentile,
+		useResponseTimePercentile:     useResTimePercentile,
 		useResponseBodySizePercentile: useResponseBodySizePercentile,
-		printOption: po,
+		printOptions:                   po,
 	}
 }
 
-func (hs *HTTPStats) CountUris() int {
-	return hs.hints.len
-}
-
 func (hs *HTTPStats) Set(uri, method string, status int, restime, resBodySize, reqBodySize float64) {
+	if len(hs.uriCapturingGroups) > 0 {
+		for _, re := range hs.uriCapturingGroups {
+			if ok := re.Match([]byte(uri)); ok {
+				pattern := re.String()
+				uri = pattern
+			}
+		}
+	}
+
 	key := fmt.Sprintf("%s_%s", method, uri)
 
 	idx := hs.hints.loadOrStore(key)
@@ -69,29 +83,125 @@ func (hs *HTTPStats) Stats() []*httpStat {
 	return hs.stats
 }
 
-type httpStat struct {
-	Uri         string `yaml:uri`
-	Cnt         int `yaml:cnt`
-	Status1xx int `yaml:status1xx`
-	Status2xx int `yaml:status2xx`
-	Status3xx int `yaml:status3xx`
-	Status4xx int `yaml:status4xx`
-	Status5xx int `yaml:status5xx`
-	Method      string `yaml:method`
-	ResponseTime *responseTime `yaml:response_time`
-	RequestBodySize *bodySize `yaml:request_body_size`
-	ResponseBodySize *bodySize `yaml:response_body_size`
+func (hs *HTTPStats) CountUris() int {
+	return hs.hints.len
+}
 
+func (hs *HTTPStats) SetOptions(options *Options) {
+	hs.options = options
+}
+
+func (hs *HTTPStats) SetURICapturingGroups(groups []string) error {
+	uriGroups, err := CompileUriGroups(groups)
+	if err != nil {
+		return err
+	}
+
+	hs.uriCapturingGroups = uriGroups
+
+	return nil
+}
+
+func (hs *HTTPStats) InitFilter(flags *Flags, options *Options) error {
+	hs.filter = NewFilter(flags, options)
+	return hs.filter.Init()
+}
+
+func (hs *HTTPStats) DoFilter(uri, status, timestr string) bool {
+	err := hs.filter.Do(uri, status, timestr)
+	if err == SkipReadLineErr || err != nil {
+		return false
+	}
+
+	return true
+}
+
+func (hs *HTTPStats) InitParser(parserType string, r io.Reader) error {
+	switch parserType {
+	case "ltsv":
+		hs.parser = parsers.NewLTSVParser(r)
+	default:
+		return fmt.Errorf("Parser Not Supproted: %s", parserType)
+	}
+
+	return nil
+}
+
+func (hs *HTTPStats) Parse() (string, string, string, float64, float64, int, error) {
+	line, err := hs.parser.Read()
+	if err != nil {
+		return "", "", "", 0, 0, 0, err
+	}
+
+	u, err := url.Parse(line[hs.options.UriLabel])
+	if err != nil {
+		return "", "", "", 0, 0, 0, err
+	}
+	var uri string
+	if hs.options.QueryString {
+		v := url.Values{}
+		values := u.Query()
+		for q := range values {
+			v.Set(q, "xxx")
+		}
+		uri = fmt.Sprintf("%s?%s", u.Path, v.Encode())
+	} else {
+		uri = u.Path
+	}
+
+	resTime, err := StringToFloat64(line[hs.options.ApptimeLabel])
+	if err != nil {
+		var reqTime float64
+		reqTime, err = StringToFloat64(line[hs.options.ReqtimeLabel])
+		if err != nil {
+			return "", "", "", 0, 0, 0, SkipReadLineErr
+		}
+
+		resTime = reqTime
+	}
+
+	bodySize, err := StringToFloat64(line[hs.options.SizeLabel])
+	if err != nil {
+		return "", "", "", 0, 0, 0, SkipReadLineErr
+	}
+
+	status, err := StringToInt(line[hs.options.StatusLabel])
+	if err != nil {
+		return "", "", "", 0, 0, 0, SkipReadLineErr
+	}
+
+	method := line[hs.options.MethodLabel]
+	timestr := line[hs.options.TimeLabel]
+
+	return uri, method, timestr, resTime, bodySize, status, nil
+}
+
+func (hs *HTTPStats) SortWithOptions() {
+	hs.Sort(hs.options.Sort, hs.options.Reverse)
+}
+
+type httpStat struct {
+	Uri              string        `yaml:uri`
+	Cnt              int           `yaml:cnt`
+	Status1xx        int           `yaml:status1xx`
+	Status2xx        int           `yaml:status2xx`
+	Status3xx        int           `yaml:status3xx`
+	Status4xx        int           `yaml:status4xx`
+	Status5xx        int           `yaml:status5xx`
+	Method           string        `yaml:method`
+	ResponseTime     *responseTime `yaml:response_time`
+	RequestBodySize  *bodySize     `yaml:request_body_size`
+	ResponseBodySize *bodySize     `yaml:response_body_size`
 }
 
 type httpStats []*httpStat
 
 func newHTTPStat(uri, method string, useResTimePercentile, useRequestBodySizePercentile, useResponseBodySizePercentile bool) *httpStat {
 	return &httpStat{
-		Uri: uri,
-		Method: method,
-		ResponseTime: newResponseTime(useResTimePercentile),
-		RequestBodySize: newBodySize(useRequestBodySizePercentile),
+		Uri:              uri,
+		Method:           method,
+		ResponseTime:     newResponseTime(useResTimePercentile),
+		RequestBodySize:  newBodySize(useRequestBodySizePercentile),
 		ResponseBodySize: newBodySize(useResponseBodySizePercentile),
 	}
 }
@@ -256,7 +366,7 @@ func (hs *httpStat) StddevResponseBodySize() float64 {
 	return hs.RequestBodySize.Stddev(hs.Cnt)
 }
 
-func lenPercentile(l int, n int) int {
+func percentRank(l int, n int) int {
 	pLen := (l * n / 100) - 1
 	if pLen < 0 {
 		pLen = 0
@@ -266,17 +376,17 @@ func lenPercentile(l int, n int) int {
 }
 
 type responseTime struct {
-	Max float64
-	Min float64
-	Sum float64
+	Max           float64
+	Min           float64
+	Sum           float64
 	usePercentile bool
-	Percentiles []float64
+	Percentiles   []float64
 }
 
 func newResponseTime(usePercentile bool) *responseTime {
 	return &responseTime{
 		usePercentile: usePercentile,
-		Percentiles: make([]float64, 0),
+		Percentiles:   make([]float64, 0),
 	}
 }
 
@@ -305,7 +415,7 @@ func (res *responseTime) P1(cnt int) float64 {
 		return 0.0
 	}
 
-	plen := lenPercentile(cnt, 1)
+	plen := percentRank(cnt, 1)
 	return res.Percentiles[plen]
 }
 
@@ -314,7 +424,7 @@ func (res *responseTime) P50(cnt int) float64 {
 		return 0.0
 	}
 
-	plen := lenPercentile(cnt, 50)
+	plen := percentRank(cnt, 50)
 	return res.Percentiles[plen]
 }
 
@@ -323,7 +433,7 @@ func (res *responseTime) P90(cnt int) float64 {
 		return 0.0
 	}
 
-	plen := lenPercentile(cnt, 90)
+	plen := percentRank(cnt, 90)
 	return res.Percentiles[plen]
 }
 
@@ -332,7 +442,7 @@ func (res *responseTime) P99(cnt int) float64 {
 		return 0.0
 	}
 
-	plen := lenPercentile(cnt, 99)
+	plen := percentRank(cnt, 99)
 	return res.Percentiles[plen]
 }
 
@@ -353,17 +463,17 @@ func (res *responseTime) Stddev(cnt int) float64 {
 }
 
 type bodySize struct {
-	Max float64
-	Min float64
-	Sum float64
+	Max           float64
+	Min           float64
+	Sum           float64
 	usePercentile bool
-	percentiles []float64
+	percentiles   []float64
 }
 
 func newBodySize(usePercentile bool) *bodySize {
 	return &bodySize{
 		usePercentile: usePercentile,
-		percentiles: make([]float64, 0),
+		percentiles:   make([]float64, 0),
 	}
 }
 
@@ -392,7 +502,7 @@ func (body *bodySize) P1(cnt int) float64 {
 		return 0.0
 	}
 
-	plen := lenPercentile(cnt, 1)
+	plen := percentRank(cnt, 1)
 	return body.percentiles[plen]
 }
 
@@ -401,7 +511,7 @@ func (body *bodySize) P50(cnt int) float64 {
 		return 0.0
 	}
 
-	plen := lenPercentile(cnt, 50)
+	plen := percentRank(cnt, 50)
 	return body.percentiles[plen]
 }
 
@@ -410,7 +520,7 @@ func (body *bodySize) P90(cnt int) float64 {
 		return 0.0
 	}
 
-	plen := lenPercentile(cnt, 90)
+	plen := percentRank(cnt, 90)
 	return body.percentiles[plen]
 }
 
@@ -419,7 +529,7 @@ func (body *bodySize) P99(cnt int) float64 {
 		return 0.0
 	}
 
-	plen := lenPercentile(cnt, 99)
+	plen := percentRank(cnt, 99)
 	return body.percentiles[plen]
 }
 

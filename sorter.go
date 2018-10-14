@@ -2,6 +2,76 @@ package httpstats
 
 import "sort"
 
+func (hs *HTTPStats) Sort(sortType string, reverse bool) {
+	switch sortType {
+	case SortCount:
+		hs.SortCount(reverse)
+	case SortUri:
+		hs.SortUri(reverse)
+	case SortMethod:
+		hs.SortMethod(reverse)
+	// response time
+	case SortMaxResponseTime:
+		hs.SortMaxResponseTime(reverse)
+	case SortMinResponseTime:
+		hs.SortMinResponseTime(reverse)
+	case SortSumResponseTime:
+		hs.SortSumResponseTime(reverse)
+	case SortAvgResponseTime:
+		hs.SortAvgResponseTime(reverse)
+	case SortP1ResponseTime:
+		hs.SortP1ResponseTime(reverse)
+	case SortP50ResponseTime:
+		hs.SortP50ResponseTime(reverse)
+	case SortP90ResponseTime:
+		hs.SortP90ResponseTime(reverse)
+	case SortP99ResponseTime:
+		hs.SortP99ResponseTime(reverse)
+	case SortStddevResponseTime:
+		hs.SortStddevResponseTime(reverse)
+	// request body size
+	case SortMaxRequestBodySize:
+		hs.SortMaxRequestBodySize(reverse)
+	case SortMinRequestBodySize:
+		hs.SortMinRequestBodySize(reverse)
+	case SortSumRequestBodySize:
+		hs.SortSumRequestBodySize(reverse)
+	case SortAvgRequestBodySize:
+		hs.SortAvgRequestBodySize(reverse)
+	case SortP1RequestBodySize:
+		hs.SortP1RequestBodySize(reverse)
+	case SortP50RequestBodySize:
+		hs.SortP50RequestBodySize(reverse)
+	case SortP90RequestBodySize:
+		hs.SortP90RequestBodySize(reverse)
+	case SortP99RequestBodySize:
+		hs.SortP99RequestBodySize(reverse)
+	case SortStddevRequestBodySize:
+		hs.SortStddevRequestBodySize(reverse)
+	// response body size
+	case SortMaxResponseBodySize:
+		hs.SortMaxResponseBodySize(reverse)
+	case SortMinResponseBodySize:
+		hs.SortMinResponseBodySize(reverse)
+	case SortSumResponseBodySize:
+		hs.SortSumResponseBodySize(reverse)
+	case SortAvgResponseBodySize:
+		hs.SortAvgResponseBodySize(reverse)
+	case SortP1ResponseBodySize:
+		hs.SortP1ResponseBodySize(reverse)
+	case SortP50ResponseBodySize:
+		hs.SortP50ResponseBodySize(reverse)
+	case SortP90ResponseBodySize:
+		hs.SortP90ResponseBodySize(reverse)
+	case SortP99ResponseBodySize:
+		hs.SortP99ResponseBodySize(reverse)
+	case SortStddevResponseBodySize:
+		hs.SortStddevResponseBodySize(reverse)
+	default:
+		hs.SortCount(reverse)
+	}
+}
+
 func (hs *HTTPStats) SortCount(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
@@ -10,6 +80,30 @@ func (hs *HTTPStats) SortCount(reverse bool) {
 	} else {
 		sort.Slice(hs.stats, func(i, j int) bool {
 			return hs.stats[i].Count() < hs.stats[j].Count()
+		})
+	}
+}
+
+func (hs *HTTPStats) SortUri(reverse bool) {
+	if reverse {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].Uri > hs.stats[j].Uri
+		})
+	} else {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].Uri < hs.stats[j].Uri
+		})
+	}
+}
+
+func (hs *HTTPStats) SortMethod(reverse bool) {
+	if reverse {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].Method > hs.stats[j].Method
+		})
+	} else {
+		sort.Slice(hs.stats, func(i, j int) bool {
+			return hs.stats[i].Method < hs.stats[j].Method
 		})
 	}
 }
@@ -50,7 +144,7 @@ func (hs *HTTPStats) SortSumResponseTime(reverse bool) {
 	}
 }
 
-func (hs *HTTPStats) AvgResponseTime(reverse bool) {
+func (hs *HTTPStats) SortAvgResponseTime(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
 			return hs.stats[i].AvgResponseTime() > hs.stats[j].AvgResponseTime()
@@ -62,7 +156,7 @@ func (hs *HTTPStats) AvgResponseTime(reverse bool) {
 	}
 }
 
-func (hs *HTTPStats) SortP1ResponseTime(reverse bool)  {
+func (hs *HTTPStats) SortP1ResponseTime(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
 			return hs.stats[i].P1ResponseTime() > hs.stats[j].P1ResponseTime()
@@ -159,7 +253,7 @@ func (hs *HTTPStats) SortSumRequestBodySize(reverse bool) {
 	}
 }
 
-func (hs *HTTPStats) AvgRequestBodySize(reverse bool) {
+func (hs *HTTPStats) SortAvgRequestBodySize(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
 			return hs.stats[i].AvgRequestBodySize() > hs.stats[j].AvgRequestBodySize()
@@ -171,7 +265,7 @@ func (hs *HTTPStats) AvgRequestBodySize(reverse bool) {
 	}
 }
 
-func (hs *HTTPStats) SortP1RequestBodySize(reverse bool)  {
+func (hs *HTTPStats) SortP1RequestBodySize(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
 			return hs.stats[i].P1RequestBodySize() > hs.stats[j].P1RequestBodySize()
@@ -231,7 +325,6 @@ func (hs *HTTPStats) SortStddevRequestBodySize(reverse bool) {
 	}
 }
 
-
 // response
 func (hs *HTTPStats) SortMaxResponseBodySize(reverse bool) {
 	if reverse {
@@ -269,7 +362,7 @@ func (hs *HTTPStats) SortSumResponseBodySize(reverse bool) {
 	}
 }
 
-func (hs *HTTPStats) AvgResponseBodySize(reverse bool) {
+func (hs *HTTPStats) SortAvgResponseBodySize(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
 			return hs.stats[i].AvgResponseBodySize() > hs.stats[j].AvgResponseBodySize()
@@ -281,7 +374,7 @@ func (hs *HTTPStats) AvgResponseBodySize(reverse bool) {
 	}
 }
 
-func (hs *HTTPStats) SortP1ResponseBodySize(reverse bool)  {
+func (hs *HTTPStats) SortP1ResponseBodySize(reverse bool) {
 	if reverse {
 		sort.Slice(hs.stats, func(i, j int) bool {
 			return hs.stats[i].P1ResponseBodySize() > hs.stats[j].P1ResponseBodySize()

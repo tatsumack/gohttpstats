@@ -1,18 +1,17 @@
 package httpstats
 
 import (
-	"io/ioutil"
-	"os"
 	"gopkg.in/yaml.v2"
-	)
+	"io"
+)
 
-func (hs *HTTPStats) DumpStats(filename string) error {
+func (hs *HTTPStats) DumpStats(w io.Writer) error {
 	buf, err := yaml.Marshal(&hs.stats)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(filename, buf, os.ModePerm)
+	_, err = w.Write(buf)
 
 	return err
 }

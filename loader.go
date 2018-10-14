@@ -1,12 +1,14 @@
 package httpstats
 
 import (
+	"io"
 	"io/ioutil"
+
 	"gopkg.in/yaml.v2"
 )
 
-func (hs *HTTPStats) LoadStats(filename string) error {
-	buf, err := ioutil.ReadFile(filename)
+func (hs *HTTPStats) LoadStats(r io.Reader) error {
+	buf, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
 	}
@@ -17,4 +19,3 @@ func (hs *HTTPStats) LoadStats(filename string) error {
 
 	return err
 }
-

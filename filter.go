@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/tkuchiki/parsetime"
+	"github.com/tkuchiki/gohttpstats/options"
 )
 
 type Filter struct {
-	flags               *Flags
-	options             *Options
+	options             *stats_options.Options
 	includeGroups       []*regexp.Regexp
 	excludeGroups       []*regexp.Regexp
 	includeStatusGroups []*regexp.Regexp
@@ -19,9 +19,8 @@ type Filter struct {
 	parseTime           parsetime.ParseTime
 }
 
-func NewFilter(flags *Flags, options *Options) *Filter {
+func NewFilter(options *stats_options.Options) *Filter {
 	return &Filter{
-		flags:   flags,
 		options: options,
 	}
 }
@@ -57,7 +56,7 @@ func (f *Filter) Init() error {
 		}
 	}
 
-	err = f.InitParseTime(*f.flags.Location)
+	err = f.InitParseTime(f.options.Location)
 	if err != nil {
 		return err
 	}

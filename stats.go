@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"sync"
 
+	"github.com/tkuchiki/gohttpstats/options"
 	"github.com/tkuchiki/gohttpstats/parsers"
 )
 
@@ -44,7 +45,7 @@ type HTTPStats struct {
 	printOptions                   *PrintOptions
 	filter                        *Filter
 	parser                        parsers.Parser
-	options                       *Options
+	options                       *stats_options.Options
 	uriCapturingGroups            []*regexp.Regexp
 }
 
@@ -87,7 +88,7 @@ func (hs *HTTPStats) CountUris() int {
 	return hs.hints.len
 }
 
-func (hs *HTTPStats) SetOptions(options *Options) {
+func (hs *HTTPStats) SetOptions(options *stats_options.Options) {
 	hs.options = options
 }
 
@@ -102,8 +103,8 @@ func (hs *HTTPStats) SetURICapturingGroups(groups []string) error {
 	return nil
 }
 
-func (hs *HTTPStats) InitFilter(flags *Flags, options *Options) error {
-	hs.filter = NewFilter(flags, options)
+func (hs *HTTPStats) InitFilter(options *stats_options.Options) error {
+	hs.filter = NewFilter(options)
 	return hs.filter.Init()
 }
 

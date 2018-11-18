@@ -43,15 +43,23 @@ type PrintOptions struct {
 	format    string
 	noHeaders bool
 	headers   []string
-	writer io.Writer
+	writer    io.Writer
 }
 
 func NewPrintOptions() *PrintOptions {
 	return &PrintOptions{
 		format:  "table",
 		headers: defaultHeaders,
-		writer: os.Stdout,
+		writer:  os.Stdout,
 	}
+}
+
+func (p *PrintOptions) SetFormat(format string) {
+	p.format = format
+}
+
+func (p *PrintOptions) SetHeaders(headers []string) {
+	p.headers = headers
 }
 
 func (p *PrintOptions) SetWriter(w io.Writer) {
@@ -90,7 +98,7 @@ func (hs *HTTPStats) printTable() {
 
 func (hs *HTTPStats) printTSV() {
 	if !hs.printOptions.noHeaders {
-		fmt.Println(strings.Join(hs.printOptions.headers, `\t`))
+		fmt.Println(strings.Join(hs.printOptions.headers, "\t"))
 	}
 	for _, s := range hs.stats {
 		data := []string{
@@ -101,6 +109,6 @@ func (hs *HTTPStats) printTSV() {
 			round(s.P1ResponseTime()), round(s.P50ResponseTime()), round(s.P99ResponseTime()),
 			round(s.StddevResponseTime()), round(s.MinResponseBodySize()), round(s.MaxResponseBodySize()), round(s.SumResponseBodySize()), round(s.AvgResponseBodySize()),
 		}
-		fmt.Println(strings.Join(data, `\t`))
+		fmt.Println(strings.Join(data, "\t"))
 	}
 }

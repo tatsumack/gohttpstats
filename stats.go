@@ -2,14 +2,11 @@ package httpstats
 
 import (
 	"fmt"
-	"io"
 	"math"
-	"net/url"
 	"regexp"
 	"sync"
 
 	"github.com/tkuchiki/gohttpstats/options"
-	"github.com/tkuchiki/gohttpstats/parsers"
 )
 
 type hints struct {
@@ -42,9 +39,8 @@ type HTTPStats struct {
 	useResponseTimePercentile     bool
 	useRequestBodySizePercentile  bool
 	useResponseBodySizePercentile bool
-	printOptions                   *PrintOptions
+	printOptions                  *PrintOptions
 	filter                        *Filter
-	parser                        parsers.Parser
 	options                       *stats_options.Options
 	uriCapturingGroups            []*regexp.Regexp
 }
@@ -55,7 +51,7 @@ func NewHTTPStats(useResTimePercentile, useRequestBodySizePercentile, useRespons
 		stats: make([]*httpStat, 0),
 		useResponseTimePercentile:     useResTimePercentile,
 		useResponseBodySizePercentile: useResponseBodySizePercentile,
-		printOptions:                   po,
+		printOptions:                  po,
 	}
 }
 
@@ -115,66 +111,6 @@ func (hs *HTTPStats) DoFilter(uri, status, timestr string) bool {
 	}
 
 	return true
-}
-
-func (hs *HTTPStats) InitParser(parserType string, r io.Reader) error {
-	switch parserType {
-	case "ltsv":
-		hs.parser = parsers.NewLTSVParser(r)
-	default:
-		return fmt.Errorf("Parser Not Supproted: %s", parserType)
-	}
-
-	return nil
-}
-
-func (hs *HTTPStats) Parse() (string, string, string, float64, float64, int, error) {
-	line, err := hs.parser.Read()
-	if err != nil {
-		return "", "", "", 0, 0, 0, err
-	}
-
-	u, err := url.Parse(line[hs.options.UriLabel])
-	if err != nil {
-		return "", "", "", 0, 0, 0, err
-	}
-	var uri string
-	if hs.options.QueryString {
-		v := url.Values{}
-		values := u.Query()
-		for q := range values {
-			v.Set(q, "xxx")
-		}
-		uri = fmt.Sprintf("%s?%s", u.Path, v.Encode())
-	} else {
-		uri = u.Path
-	}
-
-	resTime, err := StringToFloat64(line[hs.options.ApptimeLabel])
-	if err != nil {
-		var reqTime float64
-		reqTime, err = StringToFloat64(line[hs.options.ReqtimeLabel])
-		if err != nil {
-			return "", "", "", 0, 0, 0, SkipReadLineErr
-		}
-
-		resTime = reqTime
-	}
-
-	bodySize, err := StringToFloat64(line[hs.options.SizeLabel])
-	if err != nil {
-		return "", "", "", 0, 0, 0, SkipReadLineErr
-	}
-
-	status, err := StringToInt(line[hs.options.StatusLabel])
-	if err != nil {
-		return "", "", "", 0, 0, 0, SkipReadLineErr
-	}
-
-	method := line[hs.options.MethodLabel]
-	timestr := line[hs.options.TimeLabel]
-
-	return uri, method, timestr, resTime, bodySize, status, nil
 }
 
 func (hs *HTTPStats) SortWithOptions() {
